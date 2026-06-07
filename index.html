@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #fff;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-transform: uppercase;
+    }
+
+    /* Row of selectors */
+    .controls {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.45;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Shared pill button */
+    .pill-btn {
+      padding: 8px 20px;
+      border: 2px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .pill-btn:hover {
+      border-color: rgba(255,255,255,0.5);
+      color: #fff;
+    }
+
+    .pill-btn.active {
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(167,139,250,0.4);
+    }
+
+    /* Symbol picker — X/O each get their accent color when active */
+    .sym-btn {
+      padding: 8px 24px;
+      border: 2px solid rgba(255,255,255,0.2);
+      background: transparent;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 800;
+      transition: all 0.2s;
+    }
+
+    .sym-btn[data-sym="X"] { color: rgba(241,245,249,0.5); }
+    .sym-btn[data-sym="O"] { color: rgba(251,191,36,0.5); }
+
+    .sym-btn[data-sym="X"]:hover { color: #f1f5f9; border-color: rgba(241,245,249,0.4); }
+    .sym-btn[data-sym="O"]:hover { color: #fbbf24; border-color: rgba(251,191,36,0.4); }
+
+    .sym-btn[data-sym="X"].active {
+      color: #f1f5f9;
+      border-color: rgba(241,245,249,0.6);
+      background: rgba(241,245,249,0.1);
+      box-shadow: 0 4px 15px rgba(241,245,249,0.15);
+    }
+
+    .sym-btn[data-sym="O"].active {
+      color: #fbbf24;
+      border-color: rgba(251,191,36,0.6);
+      background: rgba(251,191,36,0.1);
+      box-shadow: 0 4px 15px rgba(251,191,36,0.2);
+    }
+
+    /* Score board */
+    .scoreboard {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .score-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 14px 28px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      min-width: 80px;
+    }
+
+    .score-card .label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.6;
+    }
+
+    .score-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .score-card.player .value  { color: #f1f5f9; }
+    .score-card.draws .value   { color: #94a3b8; }
+    .score-card.computer .value{ color: #fbbf24; }
+
+    .score-divider {
+      font-size: 1.5rem;
+      opacity: 0.3;
+    }
+
+    /* Status bar */
+    .status {
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      height: 1.5rem;
+      transition: opacity 0.3s;
+      opacity: 0.9;
+    }
+
+    .status.thinking { opacity: 0.5; }
+
+    /* Board */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    }
+
+    .cell {
+      width: 110px;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(167,139,250,0.15), rgba(96,165,250,0.15));
+      opacity: 0;
+      transition: opacity 0.2s;
+      border-radius: 14px;
+    }
+
+    .cell:hover:not(.taken):not(.locked)::before { opacity: 1; }
+
+    .cell:hover:not(.taken):not(.locked) {
+      border-color: rgba(167,139,250,0.4);
+      transform: scale(1.03);
+    }
+
+    .cell:active:not(.taken):not(.locked) { transform: scale(0.97); }
+    .cell.taken  { cursor: default; }
+    .cell.locked { cursor: not-allowed; }
+
+    .cell.win-cell {
+      background: rgba(167,139,250,0.15);
+      border-color: rgba(167,139,250,0.5);
+      animation: winPulse 0.6s ease;
+    }
+
+    @keyframes winPulse {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* X and O marks */
+    .mark {
+      font-size: 3.2rem;
+      font-weight: 800;
+      line-height: 1;
+      animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      user-select: none;
+    }
+
+    .mark.x { color: #f1f5f9; }
+    .mark.o { color: #fbbf24; }
+
+    @keyframes popIn {
+      0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg);   opacity: 1; }
+    }
+
+    /* Hover preview */
+    .cell:hover:not(.taken):not(.locked) .preview { display: flex; }
+
+    .preview {
+      display: none;
+      position: absolute;
+      font-size: 3.2rem;
+      font-weight: 800;
+      user-select: none;
+    }
+
+    .preview.x { color: rgba(241,245,249,0.28); }
+    .preview.o { color: rgba(251,191,36,0.28); }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 36px;
+      border: none;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(167,139,250,0.35);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(167,139,250,0.5);
+    }
+
+    .btn:active { transform: translateY(0); }
+
+    /* Thinking dots */
+    .dots span { animation: blink 1.2s infinite; display: inline-block; }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0; }
+      40%            { opacity: 1; }
+    }
+
+    /* Result overlay */
+    .result-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s;
+      z-index: 10;
+    }
+
+    .result-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .result-card {
+      background: linear-gradient(145deg, #1e1b4b, #1e3a5f);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 28px;
+      padding: 48px 64px;
+      text-align: center;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+      transform: scale(0.8);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .result-overlay.show .result-card { transform: scale(1); }
+
+    .result-emoji { font-size: 4rem; }
+
+    .result-title {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .result-sub { font-size: 1rem; opacity: 0.6; letter-spacing: 1px; }
+
+    .result-btns { display: flex; gap: 12px; margin-top: 8px; }
+
+    .btn-outline {
+      padding: 12px 32px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: transparent;
+      color: #fff;
+    }
+
+    .btn-outline:hover {
+      border-color: rgba(255,255,255,0.6);
+      transform: translateY(-2px);
+    }
+
+    /* Help button */
+    .help-btn {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.7);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      backdrop-filter: blur(8px);
+      z-index: 5;
+    }
+
+    .help-btn:hover {
+      border-color: rgba(167,139,250,0.7);
+      color: #fff;
+      background: rgba(167,139,250,0.15);
+    }
+
+    /* Docs modal */
+    .docs-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 20;
+      padding: 24px;
+    }
+
+    .docs-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .docs-card {
+      background: linear-gradient(160deg, #1a1740, #0f2744);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 720px;
+      max-height: 82vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+      transform: translateY(20px);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow: hidden;
+    }
+
+    .docs-overlay.show .docs-card { transform: translateY(0); }
+
+    .docs-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0;
+    }
+
+    .docs-header-title {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .docs-close {
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: color 0.2s;
+    }
+
+    .docs-close:hover { color: #fff; }
+
+    .docs-body {
+      overflow-y: auto;
+      padding: 28px 32px;
+      line-height: 1.75;
+      font-size: 0.92rem;
+      color: rgba(255,255,255,0.85);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(167,139,250,0.4) transparent;
+    }
+
+    /* Rendered markdown styles */
+    .docs-body h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin: 0 0 20px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .docs-body h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 28px 0 10px;
+      color: #a78bfa;
+      letter-spacing: 0.5px;
+    }
+
+    .docs-body h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin: 20px 0 8px;
+      color: #60a5fa;
+    }
+
+    .docs-body p  { margin: 0 0 12px; }
+    .docs-body ul, .docs-body ol { margin: 0 0 12px 20px; }
+    .docs-body li { margin-bottom: 4px; }
+
+    .docs-body hr {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      margin: 24px 0;
+    }
+
+    .docs-body code {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.85em;
+      color: #fbbf24;
+    }
+
+    .docs-body pre {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin: 0 0 16px;
+    }
+
+    .docs-body pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: #a5f3fc;
+      font-size: 0.88em;
+    }
+
+    .docs-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 16px;
+      font-size: 0.88rem;
+    }
+
+    .docs-body th {
+      background: rgba(167,139,250,0.15);
+      color: #a78bfa;
+      font-weight: 700;
+      text-align: left;
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .docs-body td {
+      padding: 7px 12px;
+      border: 1px solid rgba(255,255,255,0.07);
+      vertical-align: top;
+    }
+
+    .docs-body tr:nth-child(even) td {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .docs-body strong { color: #fff; font-weight: 700; }
+
+    @media (max-width: 420px) {
+      .cell { width: 88px; height: 88px; }
+      h1 { font-size: 1.8rem; }
+      .mark { font-size: 2.5rem; }
+      .result-card { padding: 36px 28px; }
+      .docs-body { padding: 20px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="help-btn" id="helpBtn" title="Documentation">?</button>
+
+<!-- Docs modal -->
+<div class="docs-overlay" id="docsOverlay">
+  <div class="docs-card">
+    <div class="docs-header">
+      <span class="docs-header-title">Documentation</span>
+      <button class="docs-close" id="docsClose">&times;</button>
+    </div>
+    <div class="docs-body" id="docsBody">Loading…</div>
+  </div>
+</div>
+
+<div class="container">
+  <h1>Tic Tac Toe</h1>
+
+  <div class="controls">
+    <!-- Symbol picker -->
+    <div class="control-group">
+      <span class="control-label">You play as</span>
+      <div class="btn-row">
+        <button class="sym-btn active" data-sym="X">X</button>
+        <button class="sym-btn" data-sym="O">O</button>
+      </div>
+    </div>
+
+    <!-- Difficulty -->
+    <div class="control-group">
+      <span class="control-label">Difficulty</span>
+      <div class="btn-row">
+        <button class="pill-btn" data-level="easy">Easy</button>
+        <button class="pill-btn active" data-level="medium">Medium</button>
+        <button class="pill-btn" data-level="hard">Hard</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="score-card player">
+      <span class="label" id="labelPlayer">You (X)</span>
+      <span class="value" id="scorePlayer">0</span>
+    </div>
+    <span class="score-divider">—</span>
+    <div class="score-card draws">
+      <span class="label">Draw</span>
+      <span class="value" id="scoreDraws">0</span>
+    </div>
+    <span class="score-divider">—</span>
+    <div class="score-card computer">
+      <span class="label" id="labelCpu">CPU (O)</span>
+      <span class="value" id="scoreComputer">0</span>
+    </div>
+  </div>
+
+  <div class="status" id="status">Your turn — place your X</div>
+
+  <div class="board" id="board"></div>
+
+  <button class="btn" id="resetBtn">New Game</button>
+</div>
+
+<!-- Result overlay -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-title" id="resultTitle">You Win!</div>
+    <div class="result-sub" id="resultSub">Great move!</div>
+    <div class="result-btns">
+      <button class="btn" id="playAgainBtn">Play Again</button>
+      <button class="btn-outline" id="changeBtn">Change Settings</button>
+    </div>
+  </div>
+</div>
+
+<script type="text/markdown" id="readme-md">
+# Tic Tac Toe
+
+A single-file browser-based Tic Tac Toe game with a computer opponent. No dependencies, no build step — open `index.html` in any modern browser to play.
+
+---
+
+## How to Play
+
+1. **Choose your symbol** — click **X** or **O** at the top. If you pick O, the computer moves first (X always goes first in standard rules).
+2. **Choose a difficulty** — Easy, Medium, or Hard.
+3. **Click any empty cell** to place your mark.
+4. First to get three in a row (horizontally, vertically, or diagonally) wins. If all nine cells fill with no winner, the game is a draw.
+5. Results appear in an overlay. Click **Play Again** to start a new round with the same settings, or **Change Settings** to adjust difficulty or symbol.
+6. The **New Game** button below the board also resets immediately at any time.
+
+### Scoring
+
+The scoreboard tracks wins, losses, and draws across rounds. Scores reset when you switch your symbol or difficulty.
+
+---
+
+## Architecture
+
+The entire application is one HTML file (`index.html`) with three sections:
+
+```
+index.html
+├── <style>   — all CSS (layout, animations, theming)
+├── <body>    — static HTML shell (controls, board container, result overlay)
+└── <script>  — all game state and logic (vanilla JavaScript, no libraries)
+```
+
+There is no server, no framework, and no external assets.
+
+### HTML Structure
+
+```
+.container
+├── h1                        — title
+├── .controls
+│   ├── .control-group        — symbol picker (X / O buttons)
+│   └── .control-group        — difficulty picker (Easy / Medium / Hard)
+├── .scoreboard               — You / Draw / CPU score cards
+├── .status                   — one-line game status message
+├── #board                    — 3×3 grid of .cell divs (built by JS)
+└── .btn#resetBtn             — New Game button
+
+#resultOverlay                — full-screen modal shown at game end
+└── .result-card
+    ├── emoji, title, subtitle
+    └── Play Again / Change Settings buttons
+```
+
+### CSS Design
+
+- **Theme** — dark purple-to-navy gradient background; frosted-glass panels via `backdrop-filter: blur`.
+- **Mark colors** — X is white (`#f1f5f9`), O is gold (`#fbbf24`).
+- **Animations** — marks pop in with a spring-easing scale+rotate keyframe; winning cells pulse; the result card scales in from 0.8.
+- **Hover preview** — a faint ghost of your symbol appears inside an empty cell on hover, coloured to match your mark.
+- **Responsive** — cells and font shrink below 420 px viewport width.
+
+---
+
+## Game Logic
+
+### State Variables
+
+| Variable | Type | Purpose |
+|---|---|---|
+| `playerMark` | `'X'` or `'O'` | The symbol the human plays |
+| `cpuMark` | `'X'` or `'O'` | The symbol the computer plays (always the opposite) |
+| `board` | `Array(9)` | Flat array representing the 3x3 grid; null = empty |
+| `gameOver` | `boolean` | Prevents moves after the game ends |
+| `locked` | `boolean` | Blocks player clicks while the CPU is "thinking" |
+| `difficulty` | `string` | easy, medium, or hard |
+| `scores` | `object` | { player, draws, cpu } — persists across rounds |
+
+### Win Detection — checkWinner(board)
+
+The eight possible winning lines are stored as index triples:
+
+```
+Rows:       [0,1,2]  [3,4,5]  [6,7,8]
+Columns:    [0,3,6]  [1,4,7]  [2,5,8]
+Diagonals:  [0,4,8]  [2,4,6]
+```
+
+The function iterates all eight lines. If all three cells in a line hold the same non-null value, that value is the winner. If all nine cells are filled with no winner, it returns 'draw'. Otherwise it returns null (game still in progress).
+
+### Turn Flow
+
+```
+Player clicks cell
+  └─► board[idx] = playerMark
+  └─► checkWinner()
+        ├── result found → endGame()
+        └── no result   → triggerCPU()
+                            └─► locked = true  (blocks board)
+                            └─► setTimeout(380–600 ms)
+                                  └─► getMove() → board[move] = cpuMark
+                                  └─► checkWinner()
+                                        ├── result found → endGame()
+                                        └── no result   → locked = false, player's turn
+```
+
+The artificial delay makes the CPU feel responsive rather than instant.
+
+### AI — getMove(board, difficulty)
+
+#### Easy
+- 20% of the time plays the optimal move.
+- 80% of the time picks a random empty cell.
+
+#### Medium
+- Always plays a **forced move** first (win immediately or block the player from winning).
+- If no forced move exists, plays the optimal move 60% of the time and a random move 40% of the time.
+
+#### Hard
+- Always plays the **optimal move** via full minimax — it cannot be beaten, only drawn.
+
+### Minimax with Alpha-Beta Pruning
+
+`bestMove(board)` tries every empty cell as a CPU move, scores the resulting position with `minimax()`, and picks the cell with the highest score.
+
+`minimax(board, depth, isMax, alpha, beta)` is a recursive search:
+
+- **Base cases** — CPU wins → +10 - depth (faster wins score higher); Player wins → depth - 10 (faster losses score lower); Draw → 0.
+- **Maximising node** (CPU's turn) — picks the child with the highest score; prunes when alpha >= beta.
+- **Minimising node** (Player's turn) — picks the child with the lowest score; prunes when beta <= alpha.
+
+Alpha-beta pruning eliminates branches that cannot affect the final decision, keeping Hard mode instantaneous despite the full 9! search space.
+
+### Symbol Selection
+
+When the user switches their symbol, `playerMark` and `cpuMark` swap. `resetGame()` checks: if `playerMark === 'O'`, it calls `triggerCPU()` immediately so the computer (X) takes the opening move.
+
+---
+
+## Running the Game
+
+**WSL / Linux**
+
+Open directly in the default Windows browser:
+
+```
+explorer.exe index.html
+```
+
+Or with wslu installed:
+
+```
+wslview index.html
+```
+
+**macOS**
+
+```
+open index.html
+```
+
+**Windows**
+
+```
+start index.html
+```
+
+**Any platform — local HTTP server**
+
+```
+python3 -m http.server 8080
+```
+
+Then open http://localhost:8080 in your browser.
+</script>
+
+<script>
+  // ── State ────────────────────────────────────────────────────
+  const EMPTY = null;
+  const WINS = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  let playerMark = 'X';   // chosen by user
+  let cpuMark    = 'O';
+  let board      = Array(9).fill(EMPTY);
+  let gameOver   = false;
+  let locked     = false;
+  let difficulty = 'medium';
+  let scores     = { player: 0, draws: 0, cpu: 0 };
+
+  // ── DOM refs ─────────────────────────────────────────────────
+  const boardEl       = document.getElementById('board');
+  const statusEl      = document.getElementById('status');
+  const resultOverlay = document.getElementById('resultOverlay');
+  const resultEmoji   = document.getElementById('resultEmoji');
+  const resultTitle   = document.getElementById('resultTitle');
+  const resultSub     = document.getElementById('resultSub');
+
+  // ── Build board cells ────────────────────────────────────────
+  function buildBoard() {
+    boardEl.innerHTML = '';
+    for (let i = 0; i < 9; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.index = i;
+      const preview = document.createElement('span');
+      preview.className = `preview ${playerMark.toLowerCase()}`;
+      preview.textContent = playerMark;
+      cell.appendChild(preview);
+      cell.addEventListener('click', () => onCellClick(i));
+      boardEl.appendChild(cell);
+    }
+  }
+
+  // ── Render board state ───────────────────────────────────────
+  function renderBoard(winLine = []) {
+    const cells = boardEl.querySelectorAll('.cell');
+    cells.forEach((cell, i) => {
+      const existingMark = cell.querySelector('.mark');
+      if (existingMark) existingMark.remove();
+
+      cell.classList.remove('taken', 'locked', 'win-cell');
+
+      if (board[i] !== EMPTY) {
+        cell.classList.add('taken');
+        const mark = document.createElement('span');
+        mark.className = `mark ${board[i].toLowerCase()}`;
+        mark.textContent = board[i];
+        cell.appendChild(mark);
+      } else if (locked || gameOver) {
+        cell.classList.add('locked');
+      }
+
+      if (winLine.includes(i)) cell.classList.add('win-cell');
+    });
+  }
+
+  // ── Game logic ───────────────────────────────────────────────
+  function checkWinner(b) {
+    for (const line of WINS) {
+      const [a, c, d] = line;
+      if (b[a] && b[a] === b[c] && b[a] === b[d])
+        return { winner: b[a], line };
+    }
+    if (b.every(v => v !== EMPTY)) return { winner: 'draw', line: [] };
+    return null;
+  }
+
+  function onCellClick(idx) {
+    if (locked || gameOver || board[idx] !== EMPTY) return;
+    board[idx] = playerMark;
+    const result = checkWinner(board);
+    renderBoard(result?.line ?? []);
+    if (result) { endGame(result); return; }
+    triggerCPU();
+  }
+
+  function triggerCPU() {
+    locked = true;
+    statusEl.innerHTML = 'Computer thinking<span class="dots"><span>.</span><span>.</span><span>.</span></span>';
+    statusEl.className = 'status thinking';
+    setTimeout(() => {
+      const move = getMove(board, difficulty);
+      board[move] = cpuMark;
+      const result = checkWinner(board);
+      renderBoard(result?.line ?? []);
+      locked = false;
+      if (result) { endGame(result); return; }
+      statusEl.textContent = `Your turn — place your ${playerMark}`;
+      statusEl.className = 'status';
+    }, 380 + Math.random() * 220);
+  }
+
+  function endGame(result) {
+    gameOver = true;
+    renderBoard(result.line);
+    if (result.winner === playerMark) {
+      scores.player++;
+      showResult('🎉', 'You Win!', 'Impressive play!');
+      statusEl.textContent = 'You win! 🎉';
+    } else if (result.winner === cpuMark) {
+      scores.cpu++;
+      showResult('🤖', 'CPU Wins!', 'Better luck next time.');
+      statusEl.textContent = 'CPU wins! Try again.';
+    } else {
+      scores.draws++;
+      showResult('🤝', "It's a Draw!", 'Perfectly balanced.');
+      statusEl.textContent = "It's a draw!";
+    }
+    updateScores();
+  }
+
+  function resetGame() {
+    board = Array(9).fill(EMPTY);
+    gameOver = false;
+    locked = false;
+
+    // Rebuild cells so preview shows correct symbol
+    buildBoard();
+    renderBoard();
+
+    // If player chose O, CPU (X) goes first
+    if (playerMark === 'O') {
+      statusEl.textContent = 'Computer goes first…';
+      statusEl.className = 'status';
+      triggerCPU();
+    } else {
+      statusEl.textContent = `Your turn — place your ${playerMark}`;
+      statusEl.className = 'status';
+    }
+  }
+
+  function updateScores() {
+    document.getElementById('scorePlayer').textContent   = scores.player;
+    document.getElementById('scoreDraws').textContent    = scores.draws;
+    document.getElementById('scoreComputer').textContent = scores.cpu;
+  }
+
+  function updateLabels() {
+    document.getElementById('labelPlayer').textContent = `You (${playerMark})`;
+    document.getElementById('labelCpu').textContent    = `CPU (${cpuMark})`;
+  }
+
+  // ── Result overlay ───────────────────────────────────────────
+  function showResult(emoji, title, sub) {
+    resultEmoji.textContent = emoji;
+    resultTitle.textContent = title;
+    resultSub.textContent   = sub;
+    resultOverlay.classList.add('show');
+  }
+
+  function hideResult() { resultOverlay.classList.remove('show'); }
+
+  document.getElementById('playAgainBtn').addEventListener('click', () => { hideResult(); resetGame(); });
+  document.getElementById('changeBtn').addEventListener('click',    () => { hideResult(); resetGame(); });
+  document.getElementById('resetBtn').addEventListener('click', resetGame);
+
+  // ── Symbol picker ─────────────────────────────────────────────
+  document.querySelectorAll('.sym-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sym-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      playerMark = btn.dataset.sym;
+      cpuMark    = playerMark === 'X' ? 'O' : 'X';
+      scores     = { player: 0, draws: 0, cpu: 0 };
+      updateScores();
+      updateLabels();
+      resetGame();
+    });
+  });
+
+  // ── Difficulty buttons ────────────────────────────────────────
+  document.querySelectorAll('.pill-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      difficulty = btn.dataset.level;
+      scores     = { player: 0, draws: 0, cpu: 0 };
+      updateScores();
+      resetGame();
+    });
+  });
+
+  // ── AI ────────────────────────────────────────────────────────
+  function getMove(b, level) {
+    const empty = b.map((v, i) => v === EMPTY ? i : -1).filter(i => i >= 0);
+    if (level === 'easy') {
+      return Math.random() < 0.2 ? bestMove(b) : empty[Math.floor(Math.random() * empty.length)];
+    }
+    if (level === 'medium') {
+      const forced = forcedMove(b);
+      if (forced !== -1) return forced;
+      return Math.random() < 0.6 ? bestMove(b) : empty[Math.floor(Math.random() * empty.length)];
+    }
+    return bestMove(b);
+  }
+
+  function forcedMove(b) {
+    for (const line of WINS) {
+      const [a, c, d] = line;
+      const vals = [b[a], b[c], b[d]];
+      if (vals.filter(v => v === cpuMark).length === 2 && vals.includes(EMPTY))
+        return line[vals.indexOf(EMPTY)];
+    }
+    for (const line of WINS) {
+      const [a, c, d] = line;
+      const vals = [b[a], b[c], b[d]];
+      if (vals.filter(v => v === playerMark).length === 2 && vals.includes(EMPTY))
+        return line[vals.indexOf(EMPTY)];
+    }
+    return -1;
+  }
+
+  function bestMove(b) {
+    let best = -Infinity, move = -1;
+    for (let i = 0; i < 9; i++) {
+      if (b[i] !== EMPTY) continue;
+      b[i] = cpuMark;
+      const score = minimax(b, 0, false, -Infinity, Infinity);
+      b[i] = EMPTY;
+      if (score > best) { best = score; move = i; }
+    }
+    return move;
+  }
+
+  function minimax(b, depth, isMax, alpha, beta) {
+    const result = checkWinner(b);
+    if (result) {
+      if (result.winner === cpuMark)    return 10 - depth;
+      if (result.winner === playerMark) return depth - 10;
+      return 0;
+    }
+    if (isMax) {
+      let best = -Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (b[i] !== EMPTY) continue;
+        b[i] = cpuMark;
+        best = Math.max(best, minimax(b, depth + 1, false, alpha, beta));
+        b[i] = EMPTY;
+        alpha = Math.max(alpha, best);
+        if (beta <= alpha) break;
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (b[i] !== EMPTY) continue;
+        b[i] = playerMark;
+        best = Math.min(best, minimax(b, depth + 1, true, alpha, beta));
+        b[i] = EMPTY;
+        beta = Math.min(beta, best);
+        if (beta <= alpha) break;
+      }
+      return best;
+    }
+  }
+
+  // ── Init ─────────────────────────────────────────────────────
+  buildBoard();
+  renderBoard();
+
+  // ── Docs modal ───────────────────────────────────────────────
+  const docsOverlay = document.getElementById('docsOverlay');
+  const docsBody    = document.getElementById('docsBody');
+  let docsLoaded    = false;
+
+  function mdToHtml(md) {
+    // Escape HTML entities first
+    let html = md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    // Fenced code blocks (``` ... ```)
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, _lang, code) =>
+      `<pre><code>${code.trimEnd()}</code></pre>`);
+
+    // Headings
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+
+    // Horizontal rules
+    html = html.replace(/^---$/gm, '<hr>');
+
+    // Bold
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Tables — header | cell | cell rows
+    html = html.replace(
+      /((?:^\|.+\|\n)+)/gm,
+      block => {
+        const rows = block.trim().split('\n');
+        const isHeader = rows[1] && /^\|[-| :]+\|$/.test(rows[1]);
+        let out = '<table>';
+        rows.forEach((row, idx) => {
+          if (isHeader && idx === 1) return; // separator row
+          const cells = row.split('|').slice(1, -1).map(c => c.trim());
+          const tag   = (isHeader && idx === 0) ? 'th' : 'td';
+          out += `<tr>${cells.map(c => `<${tag}>${c}</${tag}>`).join('')}</tr>`;
+        });
+        return out + '</table>';
+      }
+    );
+
+    // Unordered lists (groups of lines starting with - or *)
+    html = html.replace(/((?:^[-*] .+\n?)+)/gm, block => {
+      const items = block.trim().split('\n')
+        .map(l => `<li>${l.replace(/^[-*] /, '')}</li>`).join('');
+      return `<ul>${items}</ul>`;
+    });
+
+    // Ordered lists
+    html = html.replace(/((?:^\d+\. .+\n?)+)/gm, block => {
+      const items = block.trim().split('\n')
+        .map(l => `<li>${l.replace(/^\d+\. /, '')}</li>`).join('');
+      return `<ol>${items}</ol>`;
+    });
+
+    // Paragraphs — wrap remaining plain-text blocks
+    html = html.replace(/^(?!<[houptl])(.+)$/gm, '<p>$1</p>');
+
+    return html;
+  }
+
+  function openDocs() {
+    docsOverlay.classList.add('show');
+    if (docsLoaded) return;
+    const text = document.getElementById('readme-md').textContent;
+    docsBody.innerHTML = mdToHtml(text);
+    docsLoaded = true;
+  }
+
+  function closeDocs() { docsOverlay.classList.remove('show'); }
+
+  document.getElementById('helpBtn').addEventListener('click', openDocs);
+  document.getElementById('docsClose').addEventListener('click', closeDocs);
+  docsOverlay.addEventListener('click', e => { if (e.target === docsOverlay) closeDocs(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDocs(); });
+</script>
+</body>
+</html>
